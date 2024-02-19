@@ -2,6 +2,7 @@
 // @name        Easy Manga Reader
 // @namespace   Violentmonkey Scripts
 // @match       https://asura.gg/*/
+// @match       https://asuratoons.com/*/
 // @match       http*://flamescans.org/*/
 // @match       http*://luminousscans.com/*/
 // @match       http*://reset-scans.com/*/
@@ -9,7 +10,7 @@
 // @grant       none
 // @homepageURL  https://github.com/ush-ruff/Easy-Manga-Reader/
 // @downloadURL  https://github.com/ush-ruff/Easy-Manga-Reader/raw/main/script.user.js
-// @version     1.0.0
+// @version     1.1.0
 // @author      ushruff
 // @description Smooth scrolling with no delays in keydown. Add shortcuts to go to next, previous and all chapters of the manga.
 // ==/UserScript==
@@ -31,6 +32,11 @@ const KEYS = {
 // ---------------------------------------------------------------------------
 const SITES = {
   "asura.gg": {
+    next: ".chnav .ch-next-btn:not(.disabled)",
+    prev: ".chnav .ch-prev-btn:not(.disabled)",
+    allChapters: ".headpost > .allc > a"
+  },
+  "asuratoons.com": {
     next: ".chnav .ch-next-btn:not(.disabled)",
     prev: ".chnav .ch-prev-btn:not(.disabled)",
     allChapters: ".headpost > .allc > a"

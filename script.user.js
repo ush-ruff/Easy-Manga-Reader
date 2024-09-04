@@ -10,7 +10,7 @@
 // @grant       none
 // @homepageURL  https://github.com/ush-ruff/Easy-Manga-Reader/
 // @downloadURL  https://github.com/ush-ruff/Easy-Manga-Reader/raw/main/script.user.js
-// @version     1.1.1
+// @version     1.2.0
 // @author      ushruff
 // @description Smooth scrolling with no delays in keydown. Add shortcuts to go to next, previous and all chapters of the manga.
 // ==/UserScript==
@@ -22,10 +22,12 @@ const SCROLL_AMOUNT = 20; // Number of pixels to scroll in each step
 const KEYS = {
   "ArrowUp": {func: () => smoothScroll(-1), repeat: true},
   "ArrowDown": {func: () =>  smoothScroll(1), repeat: true},
-  "ArrowRight": {func: () => changeChapter("next"), repeat: false},
-  "ArrowLeft": {func: () => changeChapter("prev"), repeat: false},
-  "0": {func: () => changeChapter("allChapters"), repeat: false}
-};
+  38: {func: () => smoothScroll(-1), repeat: true},
+  40: {func: () =>  smoothScroll(1), repeat: true},
+  39: {func: () => changeChapter("next"), repeat: false},
+  37: {func: () => changeChapter("prev"), repeat: false},
+  96: {func: () => changeChapter("allChapters"), repeat: false}
+}
 
 // ---------------------------------------------------------------------------
 // REFERENCE VARIABLES (SUPPORTED SITES)
@@ -35,6 +37,11 @@ const SITES = {
     next: ".chnav .ch-next-btn:not(.disabled)",
     prev: ".chnav .ch-prev-btn:not(.disabled)",
     allChapters: ".headpost > .allc > a"
+  },
+  "asuracomic.net": {
+    // next: ".chnav .ch-next-btn:not(.disabled)",
+    // prev: ".chnav .ch-prev-btn:not(.disabled)",
+    allChapters: "div > div > div > div > h2 + p > a[href*='/series/']"
   },
   "asuratoon.com": {
     next: ".chnav .ch-next-btn:not(.disabled)",
@@ -66,39 +73,45 @@ let timers = {};
 // Key Handlers & Animation
 // ---------------------------------------------------------------------------
 function handleKeydown(event) {
-  const key = (event || window.event).key;
+  let key = event.keyCode;
   const isInteractiveElement = event.target.matches("input, textarea, select");
-  const modifierKeys = event.shiftKey || event.ctrlKey || event.altKey;
+  const modifierKeys = [16, 17, 18];
 
-  if (!(key in KEYS) || isInteractiveElement || modifierKeys) return;
+  // Cancel keyhandling if the "Main key" is a modifier key
+  if (modifierKeys.includes(key)) return;
+
+  // Adjust key to include modifier keys
+  if (event.ctrlKey) key = `ctrl+${key}`;
+  if (event.shiftKey) key = `shift+${key}`;
+  if (event.altKey) key = `alt+${key}`;
+
+  if (!(key in KEYS) || isInteractiveElement) return;
 
   if (!(key in timers)) {
     timers[key] = null;
     KEYS[key].func();
 
     if (KEYS[key].repeat) {
-      // timers[key] = setInterval(KEYS[key].func, KEYS[key].repeat);
       timers[key] = requestAnimationFrame(repeatAnimation.bind(null, key, KEYS[key].func));
     }
-  };
+  }
 
   event.preventDefault();
-};
+}
 
 function handleKeyup() {
   for (key in timers) {
     if (timers[key] != null) {
-      // clearInterval(timers[key]);
       cancelAnimationFrame(timers[key]);
-    };
-  };
+    }
+  }
   timers = {};
-};
+}
 
 function repeatAnimation(key, func) {
   func();
   timers[key] = requestAnimationFrame(repeatAnimation.bind(null, key, func));
-};
+}
 
 
 // ---------------------------------------------------------------------------
@@ -106,7 +119,7 @@ function repeatAnimation(key, func) {
 // ---------------------------------------------------------------------------
 function smoothScroll(yDir) {
   window.scrollBy(0, yDir * SCROLL_AMOUNT);
-};
+}
 
 
 // ---------------------------------------------------------------------------
@@ -114,7 +127,7 @@ function smoothScroll(yDir) {
 // ---------------------------------------------------------------------------
 function changeChapter(dir) {
   const site = window.location.hostname;
-  if (!site in SITES || !(dir in SITES[site])) return;
+  if (!SITES.hasOwnProperty(site) || !(dir in SITES[site])) return;
 
   const btn = document.querySelector(SITES[site][dir]);
   if (!btn) return;

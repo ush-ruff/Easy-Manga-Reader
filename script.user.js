@@ -1,16 +1,15 @@
 // ==UserScript==
 // @name        Easy Manga Reader
 // @namespace   Violentmonkey Scripts
-// @match       https://asura.gg/*/
-// @match       https://asuratoon.com/*/
-// @match       http*://flamescans.org/*/
-// @match       http*://luminousscans.com/*/
-// @match       http*://reset-scans.com/*/
-// @include     /^https?:\/\/(www\.)?reaperscans\.com\/comics\//
+// @match       https://asuracomic.net/series/*/chapter/*
+// @match       https://comick.io/comic/*/
+// @match       https://flamecomics.me/*/
+// @match       https://radiantscans.com/*/
+// @match       https://reaperscans.com/series/*
 // @grant       none
 // @homepageURL  https://github.com/ush-ruff/Easy-Manga-Reader/
 // @downloadURL  https://github.com/ush-ruff/Easy-Manga-Reader/raw/main/script.user.js
-// @version     1.2.0
+// @version     1.3.0
 // @author      ushruff
 // @description Smooth scrolling with no delays in keydown. Add shortcuts to go to next, previous and all chapters of the manga.
 // ==/UserScript==
@@ -20,43 +19,41 @@
 // ---------------------------------------------------------------------------
 const SCROLL_AMOUNT = 20; // Number of pixels to scroll in each step
 const KEYS = {
-  "ArrowUp": {func: () => smoothScroll(-1), repeat: true},
-  "ArrowDown": {func: () =>  smoothScroll(1), repeat: true},
-  38: {func: () => smoothScroll(-1), repeat: true},
-  40: {func: () =>  smoothScroll(1), repeat: true},
-  39: {func: () => changeChapter("next"), repeat: false},
-  37: {func: () => changeChapter("prev"), repeat: false},
-  96: {func: () => changeChapter("allChapters"), repeat: false}
+  38: {func: () => smoothScroll(-1), repeat: true},                           // key: ArrowUp
+  40: {func: () =>  smoothScroll(1), repeat: true},                           // key: ArrowDown
+  39: {func: () => changeChapter("next"), repeat: false},                     // key: ArrowRight
+  37: {func: () => changeChapter("prev"), repeat: false},                     // key: ArrowLeft
+  96: {func: () => changeChapter("allChapters"), repeat: false}               // key: Numpad 0
 }
 
 // ---------------------------------------------------------------------------
 // REFERENCE VARIABLES (SUPPORTED SITES)
 // ---------------------------------------------------------------------------
 const SITES = {
-  "asura.gg": {
-    next: ".chnav .ch-next-btn:not(.disabled)",
-    prev: ".chnav .ch-prev-btn:not(.disabled)",
-    allChapters: ".headpost > .allc > a"
-  },
   "asuracomic.net": {
-    // next: ".chnav .ch-next-btn:not(.disabled)",
-    // prev: ".chnav .ch-prev-btn:not(.disabled)",
+    // next: "",
+    // prev: "",
     allChapters: "div > div > div > div > h2 + p > a[href*='/series/']"
   },
-  "asuratoon.com": {
-    next: ".chnav .ch-next-btn:not(.disabled)",
-    prev: ".chnav .ch-prev-btn:not(.disabled)",
+  "comick.io": {
+    // next: "",
+    // prev: "",
+    allChapters: ".info-reader-container a[href*='/comic/']"
+  },
+  "flamecomics.me": {
+    // next: ".chnav .ch-next-btn:not(.disabled)",
+    // prev: ".chnav .ch-prev-btn:not(.disabled)",
     allChapters: ".headpost > .allc > a"
   },
-  "luminousscans.com": {
+  "radiantscans.com": {
     // next: ".chnav .ch-next-btn:not(.disabled)",
     // prev: ".chnav .ch-prev-btn:not(.disabled)",
     allChapters: ".headpost > .allc > a"
   },
   "reaperscans.com": {
-    next: "nav > div:nth-child(3) > a:nth-child(2)",
-    prev: "nav > div:nth-child(1) > a",
-    allChapters: "nav > div:nth-child(3) > a:nth-child(1)"
+    // next: "",
+    // prev: "",
+    allChapters: "#content > nav > div > a[href*='/series/'] button"
   }
 }
 

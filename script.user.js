@@ -2,35 +2,68 @@
 // @name        Easy Manga Reader
 // @namespace   Violentmonkey Scripts
 // @match       https://asuracomic.net/series/*/chapter/*
+// @match       https://asurascans.com/comics/*
 // @match       https://comick.io/comic/*/
 // @match       https://flamecomics.me/*/
+// @match       https://mangadex.org/chapter/*
 // @match       https://radiantscans.com/*/
 // @match       https://reaperscans.com/series/*
-// @grant       none
-// @homepageURL  https://github.com/ush-ruff/Easy-Manga-Reader/
-// @downloadURL  https://github.com/ush-ruff/Easy-Manga-Reader/raw/main/script.user.js
-// @version     1.3.0
+// @version     2.0.0
 // @author      ushruff
 // @description Smooth scrolling with no delays in keydown. Add shortcuts to go to next, previous and all chapters of the manga.
+// @homepageURL https://github.com/ush-ruff/Easy-Manga-Reader/
+// @downloadURL https://github.com/ush-ruff/Easy-Manga-Reader/raw/main/script.user.js
+// @grant       none
+// @license     GNU GPLv3
+// @require     https://raw.githubusercontent.com/ush-ruff/Common/main/Userscript-Helper-Lib/helpersBootstrap.js
 // ==/UserScript==
 
 // ---------------------------------------------------------------------------
-// CONFIGURABLE - VARIABLES
+// Configurable Variables
 // ---------------------------------------------------------------------------
 const SCROLL_AMOUNT = 20; // Number of pixels to scroll in each step
 const KEYS = {
-  38: {func: () => smoothScroll(-1), repeat: true},                           // key: ArrowUp
-  40: {func: () =>  smoothScroll(1), repeat: true},                           // key: ArrowDown
-  39: {func: () => changeChapter("next"), repeat: false},                     // key: ArrowRight
-  37: {func: () => changeChapter("prev"), repeat: false},                     // key: ArrowLeft
-  96: {func: () => changeChapter("allChapters"), repeat: false}               // key: Numpad 0
+  "ArrowUp": {
+    action: () => smoothScroll(-1),
+    label: "Scroll Up",
+    repeat: true,
+  },
+  "ArrowDown": {
+    action: () => smoothScroll(1),
+    label: "Scroll Down",
+    repeat: true,
+  },
+  "ArrowRight": {
+    action: () => changeChapter("next"),
+    label: "Next chapter",
+  },
+  "ArrowLeft": {
+    action: () => changeChapter("prev"),
+    label: "Previous chapter",
+  },
+  "0": {
+    action: () => changeChapter("allChapters"),
+    label: "View all chapters",
+  },
+  "Shift + ?": {
+    action: () => showShortcutInfo(MODAL_ID),
+    label: "Show shortcut help",
+  }
 }
 
+const SCRIPT_ID = "Easy-manga-reader"
+const MODAL_ID = "Manga-reader-shortcut-modal"
+
 // ---------------------------------------------------------------------------
-// REFERENCE VARIABLES (SUPPORTED SITES)
+// Reference Variables (Supported Sites)
 // ---------------------------------------------------------------------------
 const SITES = {
   "asuracomic.net": {
+    // next: "",
+    // prev: "",
+    allChapters: "div > div > div > div > h2 + p > a[href*='/series/']"
+  },
+  "asurascans.com": {
     // next: "",
     // prev: "",
     allChapters: "div > div > div > div > h2 + p > a[href*='/series/']"
@@ -45,6 +78,11 @@ const SITES = {
     // prev: ".chnav .ch-prev-btn:not(.disabled)",
     allChapters: ".headpost > .allc > a"
   },
+  "mangadex.org": {
+    // next: "",
+    // prev: "",
+    allChapters: ".reader--header-manga"
+  },
   "radiantscans.com": {
     // next: ".chnav .ch-next-btn:not(.disabled)",
     // prev: ".chnav .ch-prev-btn:not(.disabled)",
@@ -58,75 +96,30 @@ const SITES = {
 }
 
 // ---------------------------------------------------------------------------
-// Add Event Listeners
+// Setup Dependencies
 // ---------------------------------------------------------------------------
-document.addEventListener("keydown", handleKeydown);
-document.addEventListener("keyup", handleKeyup);
-
-let timers = {};
+const ushruffUSKit = ensureUSKit.getUSKit()
+const { registerShortcutKeys, setupShortcutInfo, showShortcutInfo, clickElement } = window.ushruffUSKit
 
 
 // ---------------------------------------------------------------------------
-// Key Handlers & Animation
+// Event Listeners
 // ---------------------------------------------------------------------------
-function handleKeydown(event) {
-  let key = event.keyCode;
-  const isInteractiveElement = event.target.matches("input, textarea, select");
-  const modifierKeys = [16, 17, 18];
-
-  // Cancel keyhandling if the "Main key" is a modifier key
-  if (modifierKeys.includes(key)) return;
-
-  // Adjust key to include modifier keys
-  if (event.ctrlKey) key = `ctrl+${key}`;
-  if (event.shiftKey) key = `shift+${key}`;
-  if (event.altKey) key = `alt+${key}`;
-
-  if (!(key in KEYS) || isInteractiveElement) return;
-
-  if (!(key in timers)) {
-    timers[key] = null;
-    KEYS[key].func();
-
-    if (KEYS[key].repeat) {
-      timers[key] = requestAnimationFrame(repeatAnimation.bind(null, key, KEYS[key].func));
-    }
-  }
-
-  event.preventDefault();
-}
-
-function handleKeyup() {
-  for (key in timers) {
-    if (timers[key] != null) {
-      cancelAnimationFrame(timers[key]);
-    }
-  }
-  timers = {};
-}
-
-function repeatAnimation(key, func) {
-  func();
-  timers[key] = requestAnimationFrame(repeatAnimation.bind(null, key, func));
-}
+window.addEventListener("load", () => {
+  registerShortcutKeys(SCRIPT_ID, KEYS)
+  setupShortcutInfo(MODAL_ID, KEYS)
+})
 
 
 // ---------------------------------------------------------------------------
-// Smooth Scroll
+// Helper Functions
 // ---------------------------------------------------------------------------
 function smoothScroll(yDir) {
   window.scrollBy(0, yDir * SCROLL_AMOUNT);
 }
 
-
-// ---------------------------------------------------------------------------
-// Change Chapters
-// ---------------------------------------------------------------------------
 function changeChapter(dir) {
   const site = window.location.hostname;
   if (!SITES.hasOwnProperty(site) || !(dir in SITES[site])) return;
-
-  const btn = document.querySelector(SITES[site][dir]);
-  if (!btn) return;
-  btn.click();
+  clickElement(SITES[site][dir]);
 }
